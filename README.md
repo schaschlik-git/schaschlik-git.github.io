@@ -1,3 +1,3 @@
 # schaschlik-git.github.io
-## Github Pages test
-Same smart content...
+sources for [schaschlik-git.github.io](https://schaschlik-git.github.io)
+content
