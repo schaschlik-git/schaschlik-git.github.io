@@ -4,14 +4,15 @@
 // - Mozilla's "SpiderMonkey": '$ js hashliboo.js'
 // - Chromium's "V8": '$ d8 hashliboo.js'
 
-const Print = ( typeof document == "undefined" )
+const runInConsoleShell = typeof scriptArgs != "undefined";
+
+const Print = runInConsoleShell
     ? ( text ) => print( text )
     : ( text ) => console.log( text );
 
 // do startup performance (and correctness) verification only when
-// running outside browser environment
-const doStartupPV = ( typeof document == "undefined" )
-    && ( typeof NO_STARTUP_PV == "undefined" );
+// running in console application
+const doStartupPV = runInConsoleShell && ( typeof NO_STARTUP_PV == "undefined" );
 const globalNoPVSpeedTest = false;
 
 // ( more ) meaningful translation of some boolean function arguments
