@@ -1,16 +1,17 @@
 "use strict";
 
-// can also be run with javascript console application:
-// Mozilla's "SpiderMonkey": '$ js hashliboo.js'
-// Chromium's "V8": '$ d8 hashliboo.js'
+// run with javascript console application:
+// - Mozilla's "SpiderMonkey": '$ js hashliboo.js'
+// - Chromium's "V8": '$ d8 hashliboo.js'
 
-const Print = ( console === undefined )
+const Print = ( typeof document == "undefined" )
     ? ( text ) => print( text )
     : ( text ) => console.log( text );
 
 // do startup performance (and correctness) verification only when
 // running outside browser environment
-const doStartupPV = ( console === undefined );
+const doStartupPV = ( typeof document == "undefined" )
+    && ( typeof NO_STARTUP_PV == "undefined" );
 const globalNoPVSpeedTest = false;
 
 // ( more ) meaningful translation of some boolean function arguments
@@ -324,7 +325,7 @@ const HASH = ( function() {
         this.add( buffer );
         time += performance.now();
         const refHex = this.ref8MiBzeros;
-        if( buffer === Buffer && refHex != "" ) {
+        if( buffer === Buffer && refHex !== undefined ) {
             const hex = this.toHex();
             if( hex != refHex ) {
                 Print( this.getName() + ": 8 MiB all zeros FAILED!" );
@@ -518,6 +519,10 @@ const MD5 = ( function() {
         return ( a << b ) | ( a >>> -b );
     }
 
+    function add32( a, b ) {
+        return ( a + b ) & 0xFFFF_FFFF; // force 32 bit integer
+    }
+
     const FUNC = [ f0, f1, f2, f3 ];
 
     ////////////////////////////////////////////////////////////////////
@@ -556,73 +561,73 @@ const MD5 = ( function() {
 
                 let A = H0, B = H1, C = H2, D = H3;
 
-                A = B + rol( A + f0( B, C, D ) + 0xD76A_A478 +  X0,  7 );
-                D = A + rol( D + f0( A, B, C ) + 0xE8C7_B756 +  X1, 12 );
-                C = D + rol( C + f0( D, A, B ) + 0x2420_70DB +  X2, 17 );
-                B = C + rol( B + f0( C, D, A ) + 0xC1BD_CEEE +  X3, 22 );
-                A = B + rol( A + f0( B, C, D ) + 0xF57C_0FAF +  X4,  7 );
-                D = A + rol( D + f0( A, B, C ) + 0x4787_C62A +  X5, 12 );
-                C = D + rol( C + f0( D, A, B ) + 0xA830_4613 +  X6, 17 );
-                B = C + rol( B + f0( C, D, A ) + 0xFD46_9501 +  X7, 22 );
-                A = B + rol( A + f0( B, C, D ) + 0x6980_98D8 +  X8,  7 );
-                D = A + rol( D + f0( A, B, C ) + 0x8B44_F7AF +  X9, 12 );
-                C = D + rol( C + f0( D, A, B ) + 0xFFFF_5BB1 + X10, 17 );
-                B = C + rol( B + f0( C, D, A ) + 0x895C_D7BE + X11, 22 );
-                A = B + rol( A + f0( B, C, D ) + 0x6B90_1122 + X12,  7 );
-                D = A + rol( D + f0( A, B, C ) + 0xFD98_7193 + X13, 12 );
-                C = D + rol( C + f0( D, A, B ) + 0xA679_438E + X14, 17 );
-                B = C + rol( B + f0( C, D, A ) + 0x49B4_0821 + X15, 22 );
+                A = add32( B, rol( A + f0( B, C, D ) + 0xD76A_A478 +  X0,  7 ) );
+                D = add32( A, rol( D + f0( A, B, C ) + 0xE8C7_B756 +  X1, 12 ) );
+                C = add32( D, rol( C + f0( D, A, B ) + 0x2420_70DB +  X2, 17 ) );
+                B = add32( C, rol( B + f0( C, D, A ) + 0xC1BD_CEEE +  X3, 22 ) );
+                A = add32( B, rol( A + f0( B, C, D ) + 0xF57C_0FAF +  X4,  7 ) );
+                D = add32( A, rol( D + f0( A, B, C ) + 0x4787_C62A +  X5, 12 ) );
+                C = add32( D, rol( C + f0( D, A, B ) + 0xA830_4613 +  X6, 17 ) );
+                B = add32( C, rol( B + f0( C, D, A ) + 0xFD46_9501 +  X7, 22 ) );
+                A = add32( B, rol( A + f0( B, C, D ) + 0x6980_98D8 +  X8,  7 ) );
+                D = add32( A, rol( D + f0( A, B, C ) + 0x8B44_F7AF +  X9, 12 ) );
+                C = add32( D, rol( C + f0( D, A, B ) + 0xFFFF_5BB1 + X10, 17 ) );
+                B = add32( C, rol( B + f0( C, D, A ) + 0x895C_D7BE + X11, 22 ) );
+                A = add32( B, rol( A + f0( B, C, D ) + 0x6B90_1122 + X12,  7 ) );
+                D = add32( A, rol( D + f0( A, B, C ) + 0xFD98_7193 + X13, 12 ) );
+                C = add32( D, rol( C + f0( D, A, B ) + 0xA679_438E + X14, 17 ) );
+                B = add32( C, rol( B + f0( C, D, A ) + 0x49B4_0821 + X15, 22 ) );
 
-                A = B + rol( A + f1( B, C, D ) + 0xF61E_2562 +  X1,  5 );
-                D = A + rol( D + f1( A, B, C ) + 0xC040_B340 +  X6,  9 );
-                C = D + rol( C + f1( D, A, B ) + 0x265E_5A51 + X11, 14 );
-                B = C + rol( B + f1( C, D, A ) + 0xE9B6_C7AA +  X0, 20 );
-                A = B + rol( A + f1( B, C, D ) + 0xD62F_105D +  X5,  5 );
-                D = A + rol( D + f1( A, B, C ) + 0x0244_1453 + X10,  9 );
-                C = D + rol( C + f1( D, A, B ) + 0xD8A1_E681 + X15, 14 );
-                B = C + rol( B + f1( C, D, A ) + 0xE7D3_FBC8 +  X4, 20 );
-                A = B + rol( A + f1( B, C, D ) + 0x21E1_CDE6 +  X9,  5 );
-                D = A + rol( D + f1( A, B, C ) + 0xC337_07D6 + X14,  9 );
-                C = D + rol( C + f1( D, A, B ) + 0xF4D5_0D87 +  X3, 14 );
-                B = C + rol( B + f1( C, D, A ) + 0x455A_14ED +  X8, 20 );
-                A = B + rol( A + f1( B, C, D ) + 0xA9E3_E905 + X13,  5 );
-                D = A + rol( D + f1( A, B, C ) + 0xFCEF_A3F8 +  X2,  9 );
-                C = D + rol( C + f1( D, A, B ) + 0x676F_02D9 +  X7, 14 );
-                B = C + rol( B + f1( C, D, A ) + 0x8D2A_4C8A + X12, 20 );
+                A = add32( B, rol( A + f1( B, C, D ) + 0xF61E_2562 +  X1,  5 ) );
+                D = add32( A, rol( D + f1( A, B, C ) + 0xC040_B340 +  X6,  9 ) );
+                C = add32( D, rol( C + f1( D, A, B ) + 0x265E_5A51 + X11, 14 ) );
+                B = add32( C, rol( B + f1( C, D, A ) + 0xE9B6_C7AA +  X0, 20 ) );
+                A = add32( B, rol( A + f1( B, C, D ) + 0xD62F_105D +  X5,  5 ) );
+                D = add32( A, rol( D + f1( A, B, C ) + 0x0244_1453 + X10,  9 ) );
+                C = add32( D, rol( C + f1( D, A, B ) + 0xD8A1_E681 + X15, 14 ) );
+                B = add32( C, rol( B + f1( C, D, A ) + 0xE7D3_FBC8 +  X4, 20 ) );
+                A = add32( B, rol( A + f1( B, C, D ) + 0x21E1_CDE6 +  X9,  5 ) );
+                D = add32( A, rol( D + f1( A, B, C ) + 0xC337_07D6 + X14,  9 ) );
+                C = add32( D, rol( C + f1( D, A, B ) + 0xF4D5_0D87 +  X3, 14 ) );
+                B = add32( C, rol( B + f1( C, D, A ) + 0x455A_14ED +  X8, 20 ) );
+                A = add32( B, rol( A + f1( B, C, D ) + 0xA9E3_E905 + X13,  5 ) );
+                D = add32( A, rol( D + f1( A, B, C ) + 0xFCEF_A3F8 +  X2,  9 ) );
+                C = add32( D, rol( C + f1( D, A, B ) + 0x676F_02D9 +  X7, 14 ) );
+                B = add32( C, rol( B + f1( C, D, A ) + 0x8D2A_4C8A + X12, 20 ) );
 
-                A = B + rol( A + f2( B, C, D ) + 0xFFFA_3942 +  X5,  4 );
-                D = A + rol( D + f2( A, B, C ) + 0x8771_F681 +  X8, 11 );
-                C = D + rol( C + f2( D, A, B ) + 0x6D9D_6122 + X11, 16 );
-                B = C + rol( B + f2( C, D, A ) + 0xFDE5_380C + X14, 23 );
-                A = B + rol( A + f2( B, C, D ) + 0xA4BE_EA44 +  X1,  4 );
-                D = A + rol( D + f2( A, B, C ) + 0x4BDE_CFA9 +  X4, 11 );
-                C = D + rol( C + f2( D, A, B ) + 0xF6BB_4B60 +  X7, 16 );
-                B = C + rol( B + f2( C, D, A ) + 0xBEBF_BC70 + X10, 23 );
-                A = B + rol( A + f2( B, C, D ) + 0x289B_7EC6 + X13,  4 );
-                D = A + rol( D + f2( A, B, C ) + 0xEAA1_27FA +  X0, 11 );
-                C = D + rol( C + f2( D, A, B ) + 0xD4EF_3085 +  X3, 16 );
-                B = C + rol( B + f2( C, D, A ) + 0x0488_1D05 +  X6, 23 );
-                A = B + rol( A + f2( B, C, D ) + 0xD9D4_D039 +  X9,  4 );
-                D = A + rol( D + f2( A, B, C ) + 0xE6DB_99E5 + X12, 11 );
-                C = D + rol( C + f2( D, A, B ) + 0x1FA2_7CF8 + X15, 16 );
-                B = C + rol( B + f2( C, D, A ) + 0xC4AC_5665 +  X2, 23 );
+                A = add32( B, rol( A + f2( B, C, D ) + 0xFFFA_3942 +  X5,  4 ) );
+                D = add32( A, rol( D + f2( A, B, C ) + 0x8771_F681 +  X8, 11 ) );
+                C = add32( D, rol( C + f2( D, A, B ) + 0x6D9D_6122 + X11, 16 ) );
+                B = add32( C, rol( B + f2( C, D, A ) + 0xFDE5_380C + X14, 23 ) );
+                A = add32( B, rol( A + f2( B, C, D ) + 0xA4BE_EA44 +  X1,  4 ) );
+                D = add32( A, rol( D + f2( A, B, C ) + 0x4BDE_CFA9 +  X4, 11 ) );
+                C = add32( D, rol( C + f2( D, A, B ) + 0xF6BB_4B60 +  X7, 16 ) );
+                B = add32( C, rol( B + f2( C, D, A ) + 0xBEBF_BC70 + X10, 23 ) );
+                A = add32( B, rol( A + f2( B, C, D ) + 0x289B_7EC6 + X13,  4 ) );
+                D = add32( A, rol( D + f2( A, B, C ) + 0xEAA1_27FA +  X0, 11 ) );
+                C = add32( D, rol( C + f2( D, A, B ) + 0xD4EF_3085 +  X3, 16 ) );
+                B = add32( C, rol( B + f2( C, D, A ) + 0x0488_1D05 +  X6, 23 ) );
+                A = add32( B, rol( A + f2( B, C, D ) + 0xD9D4_D039 +  X9,  4 ) );
+                D = add32( A, rol( D + f2( A, B, C ) + 0xE6DB_99E5 + X12, 11 ) );
+                C = add32( D, rol( C + f2( D, A, B ) + 0x1FA2_7CF8 + X15, 16 ) );
+                B = add32( C, rol( B + f2( C, D, A ) + 0xC4AC_5665 +  X2, 23 ) );
 
-                A = B + rol( A + f3( B, C, D ) + 0xF429_2244 +  X0,  6 );
-                D = A + rol( D + f3( A, B, C ) + 0x432A_FF97 +  X7, 10 );
-                C = D + rol( C + f3( D, A, B ) + 0xAB94_23A7 + X14, 15 );
-                B = C + rol( B + f3( C, D, A ) + 0xFC93_A039 +  X5, 21 );
-                A = B + rol( A + f3( B, C, D ) + 0x655B_59C3 + X12,  6 );
-                D = A + rol( D + f3( A, B, C ) + 0x8F0C_CC92 +  X3, 10 );
-                C = D + rol( C + f3( D, A, B ) + 0xFFEF_F47D + X10, 15 );
-                B = C + rol( B + f3( C, D, A ) + 0x8584_5DD1 +  X1, 21 );
-                A = B + rol( A + f3( B, C, D ) + 0x6FA8_7E4F +  X8,  6 );
-                D = A + rol( D + f3( A, B, C ) + 0xFE2C_E6E0 + X15, 10 );
-                C = D + rol( C + f3( D, A, B ) + 0xA301_4314 +  X6, 15 );
-                B = C + rol( B + f3( C, D, A ) + 0x4E08_11A1 + X13, 21 );
-                A = B + rol( A + f3( B, C, D ) + 0xF753_7E82 +  X4,  6 );
-                D = A + rol( D + f3( A, B, C ) + 0xBD3A_F235 + X11, 10 );
-                C = D + rol( C + f3( D, A, B ) + 0x2AD7_D2BB +  X2, 15 );
-                B = C + rol( B + f3( C, D, A ) + 0xEB86_D391 +  X9, 21 );
+                A = add32( B, rol( A + f3( B, C, D ) + 0xF429_2244 +  X0,  6 ) );
+                D = add32( A, rol( D + f3( A, B, C ) + 0x432A_FF97 +  X7, 10 ) );
+                C = add32( D, rol( C + f3( D, A, B ) + 0xAB94_23A7 + X14, 15 ) );
+                B = add32( C, rol( B + f3( C, D, A ) + 0xFC93_A039 +  X5, 21 ) );
+                A = add32( B, rol( A + f3( B, C, D ) + 0x655B_59C3 + X12,  6 ) );
+                D = add32( A, rol( D + f3( A, B, C ) + 0x8F0C_CC92 +  X3, 10 ) );
+                C = add32( D, rol( C + f3( D, A, B ) + 0xFFEF_F47D + X10, 15 ) );
+                B = add32( C, rol( B + f3( C, D, A ) + 0x8584_5DD1 +  X1, 21 ) );
+                A = add32( B, rol( A + f3( B, C, D ) + 0x6FA8_7E4F +  X8,  6 ) );
+                D = add32( A, rol( D + f3( A, B, C ) + 0xFE2C_E6E0 + X15, 10 ) );
+                C = add32( D, rol( C + f3( D, A, B ) + 0xA301_4314 +  X6, 15 ) );
+                B = add32( C, rol( B + f3( C, D, A ) + 0x4E08_11A1 + X13, 21 ) );
+                A = add32( B, rol( A + f3( B, C, D ) + 0xF753_7E82 +  X4,  6 ) );
+                D = add32( A, rol( D + f3( A, B, C ) + 0xBD3A_F235 + X11, 10 ) );
+                C = add32( D, rol( C + f3( D, A, B ) + 0x2AD7_D2BB +  X2, 15 ) );
+                B = add32( C, rol( B + f3( C, D, A ) + 0xEB86_D391 +  X9, 21 ) );
 
                 H0 = ( H0 + A ) & 0xFFFF_FFFF;
                 H1 = ( H1 + B ) & 0xFFFF_FFFF;
