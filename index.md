@@ -46,13 +46,15 @@ layout: default
 # hashliboo.js usage example
 
 ```js
+// when run in JavaScript console app do
+load( "hashliboo.js" );
+
 // instantiate MD5 object
 const md5 = new MD5( MINI_CODE );
 // or
 const md5 = DIGESTFACTORY.getInstance( "MD5", "mini" );
 
-// optionally verify MD5 digest performing correctly on client
-// browser's JavaScript engine
+// optionally verify MD5 digest performing correctly
 const isTrustWorthy = md5.verify(); // returns either true or false
 
 // add new data incrementally (type: ArrayBuffer)
