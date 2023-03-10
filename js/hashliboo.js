@@ -2665,120 +2665,117 @@ const SHA256BASE = ( function() {
                 let A = H0, B = H1, C = H2, D = H3,
                     E = H4, F = H5, G = H6, H = H7;
 
-                H += f1( E, F, G ) + 0x428A_2F98 +  X0; D += H; H += f0( A, B, C );
-                G += f1( D, E, F ) + 0x7137_4491 +  X1; C += G; G += f0( H, A, B );
-                F += f1( C, D, E ) + 0xB5C0_FBCF +  X2; B += F; F += f0( G, H, A );
-                E += f1( B, C, D ) + 0xE9B5_DBA5 +  X3; A += E; E += f0( F, G, H );
-                D += f1( A, B, C ) + 0x3956_C25B +  X4; H += D; D += f0( E, F, G );
-                C += f1( H, A, B ) + 0x59F1_11F1 +  X5; G += C; C += f0( D, E, F );
-                B += f1( G, H, A ) + 0x923F_82A4 +  X6; F += B; B += f0( C, D, E );
-                A += f1( F, G, H ) + 0xAB1C_5ED5 +  X7; E += A; A += f0( B, C, D );
-                H += f1( E, F, G ) + 0xD807_AA98 +  X8; D += H; H += f0( A, B, C );
-                G += f1( D, E, F ) + 0x1283_5B01 +  X9; C += G; G += f0( H, A, B );
-                F += f1( C, D, E ) + 0x2431_85BE + X10; B += F; F += f0( G, H, A );
-                E += f1( B, C, D ) + 0x550C_7DC3 + X11; A += E; E += f0( F, G, H );
-                D += f1( A, B, C ) + 0x72BE_5D74 + X12; H += D; D += f0( E, F, G );
-                C += f1( H, A, B ) + 0x80DE_B1FE + X13; G += C; C += f0( D, E, F );
-                B += f1( G, H, A ) + 0x9BDC_06A7 + X14; F += B; B += f0( C, D, E );
-                A += f1( F, G, H ) + 0xC19B_F174 + X15; E += A; A += f0( B, C, D );
-
+                  H += f1( E, F, G ) + 0x428A_2F98 +  X0; D += H; H += f0( A, B, C );
+                  G += f1( D, E, F ) + 0x7137_4491 +  X1; C += G; G += f0( H, A, B );
+                  F += f1( C, D, E ) + 0xB5C0_FBCF +  X2; B += F; F += f0( G, H, A );
+                  E += f1( B, C, D ) + 0xE9B5_DBA5 +  X3; A += E; E += f0( F, G, H );
+                  D += f1( A, B, C ) + 0x3956_C25B +  X4; H += D; D += f0( E, F, G );
+                  C += f1( H, A, B ) + 0x59F1_11F1 +  X5; G += C; C += f0( D, E, F );
+                  B += f1( G, H, A ) + 0x923F_82A4 +  X6; F += B; B += f0( C, D, E );
+                  A += f1( F, G, H ) + 0xAB1C_5ED5 +  X7; E += A; A += f0( B, C, D );
+                  H += f1( E, F, G ) + 0xD807_AA98 +  X8; D += H; H += f0( A, B, C );
+                  G += f1( D, E, F ) + 0x1283_5B01 +  X9; C += G; G += f0( H, A, B );
+                  F += f1( C, D, E ) + 0x2431_85BE + X10; B += F; F += f0( G, H, A );
+                  E += f1( B, C, D ) + 0x550C_7DC3 + X11; A += E; E += f0( F, G, H );
+                  D += f1( A, B, C ) + 0x72BE_5D74 + X12; H += D; D += f0( E, F, G );
+                  C += f1( H, A, B ) + 0x80DE_B1FE + X13; G += C; C += f0( D, E, F );
+                  B += f1( G, H, A ) + 0x9BDC_06A7 + X14; F += B; B += f0( C, D, E );
+                  A += f1( F, G, H ) + 0xC19B_F174 + X15; E += A; A += f0( B, C, D );
                  X0 += s0(  X1 ) +  X9 + s1( X14 );
-                  H += f1( E, F, G ) + 0xE49B_69C1 +  X0; D += H; H += f0( A, B, C );
                  X1 += s0(  X2 ) + X10 + s1( X15 );
+                  H += f1( E, F, G ) + 0xE49B_69C1 +  X0; D += H; H += f0( A, B, C );
                   G += f1( D, E, F ) + 0xEFBE_4786 +  X1; C += G; G += f0( H, A, B );
                  X2 += s0(  X3 ) + X11 + s1(  X0 );
-                  F += f1( C, D, E ) + 0x0FC1_9DC6 +  X2; B += F; F += f0( G, H, A );
                  X3 += s0(  X4 ) + X12 + s1(  X1 );
+                  F += f1( C, D, E ) + 0x0FC1_9DC6 +  X2; B += F; F += f0( G, H, A );
                   E += f1( B, C, D ) + 0x240C_A1CC +  X3; A += E; E += f0( F, G, H );
                  X4 += s0(  X5 ) + X13 + s1(  X2 );
-                  D += f1( A, B, C ) + 0x2DE9_2C6F +  X4; H += D; D += f0( E, F, G );
                  X5 += s0(  X6 ) + X14 + s1(  X3 );
+                  D += f1( A, B, C ) + 0x2DE9_2C6F +  X4; H += D; D += f0( E, F, G );
                   C += f1( H, A, B ) + 0x4A74_84AA +  X5; G += C; C += f0( D, E, F );
                  X6 += s0(  X7 ) + X15 + s1(  X4 );
-                  B += f1( G, H, A ) + 0x5CB0_A9DC +  X6; F += B; B += f0( C, D, E );
                  X7 += s0(  X8 ) +  X0 + s1(  X5 );
+                  B += f1( G, H, A ) + 0x5CB0_A9DC +  X6; F += B; B += f0( C, D, E );
                   A += f1( F, G, H ) + 0x76F9_88DA +  X7; E += A; A += f0( B, C, D );
                  X8 += s0(  X9 ) +  X1 + s1(  X6 );
-                  H += f1( E, F, G ) + 0x983E_5152 +  X8; D += H; H += f0( A, B, C );
                  X9 += s0( X10 ) +  X2 + s1(  X7 );
+                  H += f1( E, F, G ) + 0x983E_5152 +  X8; D += H; H += f0( A, B, C );
                   G += f1( D, E, F ) + 0xA831_C66D +  X9; C += G; G += f0( H, A, B );
                 X10 += s0( X11 ) +  X3 + s1(  X8 );
-                  F += f1( C, D, E ) + 0xB003_27C8 + X10; B += F; F += f0( G, H, A );
                 X11 += s0( X12 ) +  X4 + s1(  X9 );
+                  F += f1( C, D, E ) + 0xB003_27C8 + X10; B += F; F += f0( G, H, A );
                   E += f1( B, C, D ) + 0xBF59_7FC7 + X11; A += E; E += f0( F, G, H );
                 X12 += s0( X13 ) +  X5 + s1( X10 );
-                  D += f1( A, B, C ) + 0xC6E0_0BF3 + X12; H += D; D += f0( E, F, G );
                 X13 += s0( X14 ) +  X6 + s1( X11 );
+                  D += f1( A, B, C ) + 0xC6E0_0BF3 + X12; H += D; D += f0( E, F, G );
                   C += f1( H, A, B ) + 0xD5A7_9147 + X13; G += C; C += f0( D, E, F );
                 X14 += s0( X15 ) +  X7 + s1( X12 );
-                  B += f1( G, H, A ) + 0x06CA_6351 + X14; F += B; B += f0( C, D, E );
                 X15 += s0(  X0 ) +  X8 + s1( X13 );
+                  B += f1( G, H, A ) + 0x06CA_6351 + X14; F += B; B += f0( C, D, E );
                   A += f1( F, G, H ) + 0x1429_2967 + X15; E += A; A += f0( B, C, D );
-
                  X0 += s0(  X1 ) +  X9 + s1( X14 );
-                  H += f1( E, F, G ) + 0x27B7_0A85 +  X0; D += H; H += f0( A, B, C );
                  X1 += s0(  X2 ) + X10 + s1( X15 );
+                  H += f1( E, F, G ) + 0x27B7_0A85 +  X0; D += H; H += f0( A, B, C );
                   G += f1( D, E, F ) + 0x2E1B_2138 +  X1; C += G; G += f0( H, A, B );
                  X2 += s0(  X3 ) + X11 + s1(  X0 );
-                  F += f1( C, D, E ) + 0x4D2C_6DFC +  X2; B += F; F += f0( G, H, A );
                  X3 += s0(  X4 ) + X12 + s1(  X1 );
+                  F += f1( C, D, E ) + 0x4D2C_6DFC +  X2; B += F; F += f0( G, H, A );
                   E += f1( B, C, D ) + 0x5338_0D13 +  X3; A += E; E += f0( F, G, H );
                  X4 += s0(  X5 ) + X13 + s1(  X2 );
-                  D += f1( A, B, C ) + 0x650A_7354 +  X4; H += D; D += f0( E, F, G );
                  X5 += s0(  X6 ) + X14 + s1(  X3 );
+                  D += f1( A, B, C ) + 0x650A_7354 +  X4; H += D; D += f0( E, F, G );
                   C += f1( H, A, B ) + 0x766A_0ABB +  X5; G += C; C += f0( D, E, F );
                  X6 += s0(  X7 ) + X15 + s1(  X4 );
-                  B += f1( G, H, A ) + 0x81C2_C92E +  X6; F += B; B += f0( C, D, E );
                  X7 += s0(  X8 ) +  X0 + s1(  X5 );
+                  B += f1( G, H, A ) + 0x81C2_C92E +  X6; F += B; B += f0( C, D, E );
                   A += f1( F, G, H ) + 0x9272_2C85 +  X7; E += A; A += f0( B, C, D );
                  X8 += s0(  X9 ) +  X1 + s1(  X6 );
-                  H += f1( E, F, G ) + 0xA2BF_E8A1 +  X8; D += H; H += f0( A, B, C );
                  X9 += s0( X10 ) +  X2 + s1(  X7 );
+                  H += f1( E, F, G ) + 0xA2BF_E8A1 +  X8; D += H; H += f0( A, B, C );
                   G += f1( D, E, F ) + 0xA81A_664B +  X9; C += G; G += f0( H, A, B );
                 X10 += s0( X11 ) +  X3 + s1(  X8 );
-                  F += f1( C, D, E ) + 0xC24B_8B70 + X10; B += F; F += f0( G, H, A );
                 X11 += s0( X12 ) +  X4 + s1(  X9 );
+                  F += f1( C, D, E ) + 0xC24B_8B70 + X10; B += F; F += f0( G, H, A );
                   E += f1( B, C, D ) + 0xC76C_51A3 + X11; A += E; E += f0( F, G, H );
                 X12 += s0( X13 ) +  X5 + s1( X10 );
-                  D += f1( A, B, C ) + 0xD192_E819 + X12; H += D; D += f0( E, F, G );
                 X13 += s0( X14 ) +  X6 + s1( X11 );
+                  D += f1( A, B, C ) + 0xD192_E819 + X12; H += D; D += f0( E, F, G );
                   C += f1( H, A, B ) + 0xD699_0624 + X13; G += C; C += f0( D, E, F );
                 X14 += s0( X15 ) +  X7 + s1( X12 );
-                  B += f1( G, H, A ) + 0xF40E_3585 + X14; F += B; B += f0( C, D, E );
                 X15 += s0(  X0 ) +  X8 + s1( X13 );
-                 A += f1( F, G, H ) + 0x106A_A070 + X15; E += A; A += f0( B, C, D );
-
+                  B += f1( G, H, A ) + 0xF40E_3585 + X14; F += B; B += f0( C, D, E );
+                  A += f1( F, G, H ) + 0x106A_A070 + X15; E += A; A += f0( B, C, D );
                  X0 += s0(  X1 ) +  X9 + s1( X14 );
-                  H += f1( E, F, G ) + 0x19A4_C116 +  X0; D += H; H += f0( A, B, C );
                  X1 += s0(  X2 ) + X10 + s1( X15 );
+                  H += f1( E, F, G ) + 0x19A4_C116 +  X0; D += H; H += f0( A, B, C );
                   G += f1( D, E, F ) + 0x1E37_6C08 +  X1; C += G; G += f0( H, A, B );
                  X2 += s0(  X3 ) + X11 + s1(  X0 );
-                  F += f1( C, D, E ) + 0x2748_774C +  X2; B += F; F += f0( G, H, A );
                  X3 += s0(  X4 ) + X12 + s1(  X1 );
+                  F += f1( C, D, E ) + 0x2748_774C +  X2; B += F; F += f0( G, H, A );
                   E += f1( B, C, D ) + 0x34B0_BCB5 +  X3; A += E; E += f0( F, G, H );
                  X4 += s0(  X5 ) + X13 + s1(  X2 );
-                  D += f1( A, B, C ) + 0x391C_0CB3 +  X4; H += D; D += f0( E, F, G );
                  X5 += s0(  X6 ) + X14 + s1(  X3 );
+                  D += f1( A, B, C ) + 0x391C_0CB3 +  X4; H += D; D += f0( E, F, G );
                   C += f1( H, A, B ) + 0x4ED8_AA4A +  X5; G += C; C += f0( D, E, F );
                  X6 += s0(  X7 ) + X15 + s1(  X4 );
-                  B += f1( G, H, A ) + 0x5B9C_CA4F +  X6; F += B; B += f0( C, D, E );
                  X7 += s0(  X8 ) +  X0 + s1(  X5 );
+                  B += f1( G, H, A ) + 0x5B9C_CA4F +  X6; F += B; B += f0( C, D, E );
                   A += f1( F, G, H ) + 0x682E_6FF3 +  X7; E += A; A += f0( B, C, D );
                  X8 += s0(  X9 ) +  X1 + s1(  X6 );
-                  H += f1( E, F, G ) + 0x748F_82EE +  X8; D += H; H += f0( A, B, C );
                  X9 += s0( X10 ) +  X2 + s1(  X7 );
+                  H += f1( E, F, G ) + 0x748F_82EE +  X8; D += H; H += f0( A, B, C );
                   G += f1( D, E, F ) + 0x78A5_636F +  X9; C += G; G += f0( H, A, B );
                 X10 += s0( X11 ) +  X3 + s1(  X8 );
-                  F += f1( C, D, E ) + 0x84C8_7814 + X10; B += F; F += f0( G, H, A );
                 X11 += s0( X12 ) +  X4 + s1(  X9 );
+                  F += f1( C, D, E ) + 0x84C8_7814 + X10; B += F; F += f0( G, H, A );
                   E += f1( B, C, D ) + 0x8CC7_0208 + X11; A += E; E += f0( F, G, H );
                 X12 += s0( X13 ) +  X5 + s1( X10 );
-                  D += f1( A, B, C ) + 0x90BE_FFFA + X12; H += D; D += f0( E, F, G );
                 X13 += s0( X14 ) +  X6 + s1( X11 );
+                  D += f1( A, B, C ) + 0x90BE_FFFA + X12; H += D; D += f0( E, F, G );
                   C += f1( H, A, B ) + 0xA450_6CEB + X13; G += C; C += f0( D, E, F );
                 X14 += s0( X15 ) +  X7 + s1( X12 );
-                  B += f1( G, H, A ) + 0xBEF9_A3F7 + X14; F += B; B += f0( C, D, E );
                 X15 += s0(  X0 ) +  X8 + s1( X13 );
+                  B += f1( G, H, A ) + 0xBEF9_A3F7 + X14; F += B; B += f0( C, D, E );
                   A += f1( F, G, H ) + 0xC671_78F2 + X15; E += A; A += f0( B, C, D );
 
                 H0 = ( H0 + A ) & 0xFFFF_FFFF;
@@ -4381,8 +4378,7 @@ const SHA512BASE = ( function() {
     ];
 
     // BEWARE side effects!!!
-    const tmp = UINT64.zero(), tmp2 = UINT64.zero(),
-          tmp3 = UINT64.zero(), result = UINT64.zero();
+    const tmp = UINT64.zero(), tmp2 = UINT64.zero(), result = UINT64.zero();
 
     function s0( a ) {
         // ror( a, 1 ) ^ ror( a, 8 ) ^ ( a >>> 7 );
@@ -5042,3 +5038,33 @@ const DIGESTFACTORY = ( function() {
 } )();
 
 /**********************************************************************/
+
+/*
+export {
+    MINI_CODE,
+    UNROLLED_CODE,
+
+    MD5,
+    RIPEMD128,
+    RIPEMD256,
+    RIPEMD160,
+    RIPEMD320,
+    SHA1,
+    SHA224,
+    SHA256,
+    BLAKE2s128,
+    BLAKE2s160,
+    BLAKE2s224,
+    BLAKE2s256,
+    BLAKE2b160,
+    BLAKE2b256,
+    BLAKE2b384,
+    BLAKE2b512,
+    SHA512_224,
+    SHA512_256,
+    SHA512_384,
+    SHA512,
+
+    DIGESTFACTORY
+};
+*/
