@@ -1,24 +1,14 @@
 "use strict";
 
-// run with javascript console application:
-// - Mozilla's "SpiderMonkey": '$ js hashliboo.js'
-// - Chromium's "V8": '$ d8 hashliboo.js'
-
 const runInConsoleShell = typeof scriptArgs != "undefined";
 
 const Print = runInConsoleShell
     ? ( text ) => print( text )
     : ( text ) => console.log( text );
 
-// do startup performance (and correctness) verification only when
-// running in console application
-const doStartupPV = runInConsoleShell && ( typeof NO_STARTUP_PV == "undefined" );
-const globalNoPVSpeedTest = false;
-
 // ( more ) meaningful translation of some boolean function arguments
 const MINI_CODE = false;    // 'unrolled' = false
 const UNROLLED_CODE = true; // 'unrolled' = true
-const NO_SPEED_TEST = true; // 'noSpeedTest' = true
 
 const LITTLE_ENDIAN = true; // 'littleEndian' = true;
 const BIG_ENDIAN = false;   // 'littleEndian' = false;
@@ -289,13 +279,11 @@ const HASH = ( function() {
             hashInstance.add( bytes.buffer );
     }
 
-    // hashRef: Map of ( verifyData index, hash hex string ) pairs
-    thisClass.prototype.verify = function( hashRef ) {
-        for( const [ index, ref ] of hashRef ) {
-            // omit verifcation of last hasRef entry
+    thisClass.prototype.verify = function() {
+        for( const [ index, ref ] of this.hashRef ) {
+            // omit verification of last hashRef entry
             // "\x00".repeat( 8 * 1024 * 1024 )
             if( index == 7 ) {
-                this.ref8MiBzeros = ref;
                 break;
             }
             this.init();
@@ -325,10 +313,10 @@ const HASH = ( function() {
         let time = - performance.now(); // milliseconds
         this.add( buffer );
         time += performance.now();
-        const refHex = this.ref8MiBzeros;
-        if( buffer === Buffer && refHex !== undefined ) {
+        if( buffer === Buffer ) {
             const hex = this.toHex();
-            if( hex != refHex ) {
+            const refHex = this.hashRef.get( 7 );
+            if( hex !=  refHex ) {
                 Print( this.getName() + ": 8 MiB all zeros FAILED!" );
                 Print( hex + " != " + refHex );
             }
@@ -453,25 +441,6 @@ const MD5 = ( function() {
     // private static class variables / functions
 
     const HASH_SIZE = 16;
-
-    const md5ref = new Map( [
-        // ""
-        [ 0, "d41d8cd98f00b204e9800998ecf8427e" ],
-        // "a"
-        [ 1, "0cc175b9c0f1b6a831c399e269772661" ],
-        // "abc"
-        [ 2, "900150983cd24fb0d6963f7d28e17f72" ],
-        // "\x55".repeat( 56 )
-        [ 3, "39b1d9070bdafbfec1c0f5ca1fefe27e" ],
-        // "\xaa".repeat( 112 )
-        [ 4, "67f22a01975b684d76181bf549317a24" ],
-        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
-        [ 5, "d3e718f99a9fbfce02162144b47a6049" ],
-        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
-        [ 6, "9f8b217e6b41ccd5e8d0793ad2c0a1f5" ],
-        // "\x00".repeat( 8 * 1024 * 1024 )
-        [ 7, "96995b58d4cbf6aaa9041b4f00c7f6ae" ],
-    ] );
 
     const K = [
         0xD76A_A478, 0xE8C7_B756, 0x2420_70DB, 0xC1BD_CEEE, 0xF57C_0FAF, 0x4787_C62A, 0xA830_4613, 0xFD46_9501,
@@ -686,22 +655,29 @@ const MD5 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // class members / methods
 
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, md5ref );
-    };
+    thisClass.prototype.hashRef = new Map( [
+        // ""
+        [ 0, "d41d8cd98f00b204e9800998ecf8427e" ],
+        // "a"
+        [ 1, "0cc175b9c0f1b6a831c399e269772661" ],
+        // "abc"
+        [ 2, "900150983cd24fb0d6963f7d28e17f72" ],
+        // "\x55".repeat( 56 )
+        [ 3, "39b1d9070bdafbfec1c0f5ca1fefe27e" ],
+        // "\xaa".repeat( 112 )
+        [ 4, "67f22a01975b684d76181bf549317a24" ],
+        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
+        [ 5, "d3e718f99a9fbfce02162144b47a6049" ],
+        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
+        [ 6, "9f8b217e6b41ccd5e8d0793ad2c0a1f5" ],
+        // "\x00".repeat( 8 * 1024 * 1024 )
+        [ 7, "96995b58d4cbf6aaa9041b4f00c7f6ae" ],
+    ] );
 
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( globalNoPVSpeedTest );
-        ( new thisClass( UNROLLED_CODE ) ).pv( globalNoPVSpeedTest );
-    }
 
     return thisClass;
 } )();
@@ -717,25 +693,6 @@ const RIPEMD128 = ( function() {
     // private static class variables / functions
 
     const HASH_SIZE = 16;
-
-    const ripemd128ref = new Map( [
-        // ""
-        [ 0, "cdf26213a150dc3ecb610f18f6b38b46" ],
-        // "a"
-        [ 1, "86be7afa339d0fc7cfc785e72f578d33" ],
-        // "abc"
-        [ 2, "c14a12199c66e4ba84636b0f69144c77" ],
-        // "\x55".repeat( 56 )
-        [ 3, "0d8cf3c5b1bdb3d7205058acf422648d" ],
-        // "\xaa".repeat( 112 )
-        [ 4, "d645c83eebdbe6f4d0f59564ddde8dfd" ],
-        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
-        [ 5, "a12fef64868f64b21584caa984946851" ],
-        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
-        [ 6, "68c7ee332322032694ff12b74a6898fa" ],
-        // "\x00".repeat( 8 * 1024 * 1024 )
-        [ 7, "fe2b1807dde5fef320c5addbe288904f" ]
-    ] );
 
     const K1  = 0x5A82_7999, K2  = 0x6ED9_EBA1, K3  = 0x8F1B_BCDC,
           K1_ = 0x6D70_3EF3, K2_ = 0x5C4D_D124, K3_ = 0x50A2_8BE6;
@@ -1034,22 +991,29 @@ const RIPEMD128 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // class members / methods
 
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, ripemd128ref );
-    };
+    thisClass.prototype.hashRef = new Map( [
+        // ""
+        [ 0, "cdf26213a150dc3ecb610f18f6b38b46" ],
+        // "a"
+        [ 1, "86be7afa339d0fc7cfc785e72f578d33" ],
+        // "abc"
+        [ 2, "c14a12199c66e4ba84636b0f69144c77" ],
+        // "\x55".repeat( 56 )
+        [ 3, "0d8cf3c5b1bdb3d7205058acf422648d" ],
+        // "\xaa".repeat( 112 )
+        [ 4, "d645c83eebdbe6f4d0f59564ddde8dfd" ],
+        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
+        [ 5, "a12fef64868f64b21584caa984946851" ],
+        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
+        [ 6, "68c7ee332322032694ff12b74a6898fa" ],
+        // "\x00".repeat( 8 * 1024 * 1024 )
+        [ 7, "fe2b1807dde5fef320c5addbe288904f" ]
+    ] );
 
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( globalNoPVSpeedTest );
-        ( new thisClass( UNROLLED_CODE ) ).pv( globalNoPVSpeedTest );
-    }
 
     return thisClass;
 } )();
@@ -1065,25 +1029,6 @@ const RIPEMD256 = ( function() {
     // private static class variables / functions
 
     const HASH_SIZE = 32;
-
-    const ripemd256ref = new Map( [
-        // ""
-        [ 0, "02ba4c4e5f8ecd1877fc52d64d30e37a2d9774fb1e5d026380ae0168e3c5522d" ],
-        // "a"
-        [ 1, "f9333e45d857f5d90a91bab70a1eba0cfb1be4b0783c9acfcd883a9134692925" ],
-        // "abc"
-        [ 2, "afbd6e228b9d8cbbcef5ca2d03e6dba10ac0bc7dcbe4680e1e42d2e975459b65" ],
-        // "\x55".repeat( 56 )
-        [ 3, "9d14194ddb800541fa88961e62e4fc3e3b2255c7489fc191a36a5d081cb60cc9" ],
-        // "\xaa".repeat( 112 )
-        [ 4, "81c0fc4ac1517889b44a10c6f862a23caeaf66a1de9bc560474886f8d39bc091" ],
-        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
-        [ 5, "2844cbc894d391617e5701febac25014b64fc10e2b76ca89a3f167b884d59418" ],
-        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
-        [ 6, "b2263435c3534c121978e4c1e506f469f88eb5b5d5f8713b7711cf6c60595835" ],
-        // "\x00".repeat( 8 * 1024 * 1024 )
-        [ 7, "25bd68e19399e6c1da75d455e73c73b86580706cb27dbad9ea5cf24d1956fe27" ]
-    ] );
 
     const K1  = 0x5A82_7999, K2  = 0x6ED9_EBA1, K3  = 0x8F1B_BCDC,
           K1_ = 0x6D70_3EF3, K2_ = 0x5C4D_D124, K3_ = 0x50A2_8BE6;
@@ -1397,22 +1342,29 @@ const RIPEMD256 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // class members / methods
 
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, ripemd256ref );
-    };
+    thisClass.prototype.hashRef = new Map( [
+        // ""
+        [ 0, "02ba4c4e5f8ecd1877fc52d64d30e37a2d9774fb1e5d026380ae0168e3c5522d" ],
+        // "a"
+        [ 1, "f9333e45d857f5d90a91bab70a1eba0cfb1be4b0783c9acfcd883a9134692925" ],
+        // "abc"
+        [ 2, "afbd6e228b9d8cbbcef5ca2d03e6dba10ac0bc7dcbe4680e1e42d2e975459b65" ],
+        // "\x55".repeat( 56 )
+        [ 3, "9d14194ddb800541fa88961e62e4fc3e3b2255c7489fc191a36a5d081cb60cc9" ],
+        // "\xaa".repeat( 112 )
+        [ 4, "81c0fc4ac1517889b44a10c6f862a23caeaf66a1de9bc560474886f8d39bc091" ],
+        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
+        [ 5, "2844cbc894d391617e5701febac25014b64fc10e2b76ca89a3f167b884d59418" ],
+        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
+        [ 6, "b2263435c3534c121978e4c1e506f469f88eb5b5d5f8713b7711cf6c60595835" ],
+        // "\x00".repeat( 8 * 1024 * 1024 )
+        [ 7, "25bd68e19399e6c1da75d455e73c73b86580706cb27dbad9ea5cf24d1956fe27" ]
+    ] );
 
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( globalNoPVSpeedTest );
-        ( new thisClass( UNROLLED_CODE ) ).pv( globalNoPVSpeedTest );
-    }
 
     return thisClass;
 } )();
@@ -1428,25 +1380,6 @@ const RIPEMD160 = ( function() {
     // private static class variables / functions
 
     const HASH_SIZE = 20;
-
-    const ripemd160ref = new Map( [
-        // ""
-        [ 0, "9c1185a5c5e9fc54612808977ee8f548b2258d31" ],
-        // "a"
-        [ 1, "0bdc9d2d256b3ee9daae347be6f4dc835a467ffe" ],
-        // "abc"
-        [ 2, "8eb208f7e05d987a9b044a8e98c6b087f15a0bfc" ],
-        // "\x55".repeat( 56 )
-        [ 3, "22b34711ec14abe4ab8816c9ae5b9afe776979f3" ],
-        // "\xaa".repeat( 112 )
-        [ 4, "621be5b1dc2cb4a5fe9b155dd8676c329bb91a34" ],
-        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
-        [ 5, "fa40330fc4b92bb3b8bb0a275195e9d496647bc6" ],
-        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
-        [ 6, "5b8ea9b82c39b311b796284687e2fe0102c9821e" ],
-        // "\x00".repeat( 8 * 1024 * 1024 )
-        [ 7, "255cdee1641f893e3cc514c71b7ed4c6088c4bba" ]
-    ] );
 
     const K1  = 0x5A82_7999, K2  = 0x6ED9_EBA1, K3  = 0x8F1B_BCDC,
           K4  = 0xA953_FD4E;
@@ -1799,22 +1732,29 @@ const RIPEMD160 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // class members / methods
 
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, ripemd160ref );
-    };
+    thisClass.prototype.hashRef = new Map( [
+        // ""
+        [ 0, "9c1185a5c5e9fc54612808977ee8f548b2258d31" ],
+        // "a"
+        [ 1, "0bdc9d2d256b3ee9daae347be6f4dc835a467ffe" ],
+        // "abc"
+        [ 2, "8eb208f7e05d987a9b044a8e98c6b087f15a0bfc" ],
+        // "\x55".repeat( 56 )
+        [ 3, "22b34711ec14abe4ab8816c9ae5b9afe776979f3" ],
+        // "\xaa".repeat( 112 )
+        [ 4, "621be5b1dc2cb4a5fe9b155dd8676c329bb91a34" ],
+        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
+        [ 5, "fa40330fc4b92bb3b8bb0a275195e9d496647bc6" ],
+        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
+        [ 6, "5b8ea9b82c39b311b796284687e2fe0102c9821e" ],
+        // "\x00".repeat( 8 * 1024 * 1024 )
+        [ 7, "255cdee1641f893e3cc514c71b7ed4c6088c4bba" ]
+    ] );
 
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( globalNoPVSpeedTest );
-        ( new thisClass( UNROLLED_CODE ) ).pv( globalNoPVSpeedTest );
-    }
 
     return thisClass;
 } )();
@@ -1830,25 +1770,6 @@ const RIPEMD320 = ( function() {
     // private static class variables / functions
 
     const HASH_SIZE = 40;
-
-    const ripemd320ref = new Map( [
-        // ""
-        [ 0, "22d65d5661536cdc75c1fdf5c6de7b41b9f27325ebc61e8557177d705a0ec880151c3a32a00899b8" ],
-        // "a"
-        [ 1, "ce78850638f92658a5a585097579926dda667a5716562cfcf6fbe77f63542f99b04705d6970dff5d" ],
-        // "abc"
-        [ 2, "de4c01b3054f8930a79d09ae738e92301e5a17085beffdc1b8d116713e74f82fa942d64cdbc4682d" ],
-        // "\x55".repeat( 56 )
-        [ 3, "73bda2c6983146cbc2bab9034f890e6b12ebb26b9380fe805f26303be363fec96a87fea3aa7aa9e0" ],
-        // "\xaa".repeat( 112 )
-        [ 4, "92023577df96ed08295371ba0f7d31a0e06d5e9ce7926a6a9065fb91658ea934f36a635142f1533c" ],
-        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
-        [ 5, "9b702192e1e5db9d587c0f30987591d4f8489aaf24f0459c0eb7231c9f754f52d70063c41885fbe0" ],
-        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
-        [ 6, "04731d000f43b0302971e7f1a950443bf676b0d434ec44d2636d630525cb9811d0442140011e1814" ],
-        // "\x00".repeat( 8 * 1024 * 1024 )
-        [ 7, "9b18a32e5380d112f1cb26c639511d21453e4d9eaf5401a08d675c73470702d3921d4c19c4232979" ]
-    ] );
 
     const K1  = 0x5A82_7999, K2  = 0x6ED9_EBA1, K3  = 0x8F1B_BCDC,
           K4  = 0xA953_FD4E;
@@ -2219,22 +2140,29 @@ const RIPEMD320 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // class members / methods
 
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, ripemd320ref );
-    };
+    thisClass.prototype.hashRef = new Map( [
+        // ""
+        [ 0, "22d65d5661536cdc75c1fdf5c6de7b41b9f27325ebc61e8557177d705a0ec880151c3a32a00899b8" ],
+        // "a"
+        [ 1, "ce78850638f92658a5a585097579926dda667a5716562cfcf6fbe77f63542f99b04705d6970dff5d" ],
+        // "abc"
+        [ 2, "de4c01b3054f8930a79d09ae738e92301e5a17085beffdc1b8d116713e74f82fa942d64cdbc4682d" ],
+        // "\x55".repeat( 56 )
+        [ 3, "73bda2c6983146cbc2bab9034f890e6b12ebb26b9380fe805f26303be363fec96a87fea3aa7aa9e0" ],
+        // "\xaa".repeat( 112 )
+        [ 4, "92023577df96ed08295371ba0f7d31a0e06d5e9ce7926a6a9065fb91658ea934f36a635142f1533c" ],
+        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
+        [ 5, "9b702192e1e5db9d587c0f30987591d4f8489aaf24f0459c0eb7231c9f754f52d70063c41885fbe0" ],
+        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
+        [ 6, "04731d000f43b0302971e7f1a950443bf676b0d434ec44d2636d630525cb9811d0442140011e1814" ],
+        // "\x00".repeat( 8 * 1024 * 1024 )
+        [ 7, "9b18a32e5380d112f1cb26c639511d21453e4d9eaf5401a08d675c73470702d3921d4c19c4232979" ]
+    ] );
 
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( globalNoPVSpeedTest );
-        ( new thisClass( UNROLLED_CODE ) ).pv( globalNoPVSpeedTest );
-    }
 
     return thisClass;
 } )();
@@ -2251,25 +2179,6 @@ const SHA1 = ( function() {
     // private static class variables / functions
 
     const HASH_SIZE = 20;
-
-    const sha1ref = new Map( [
-        // ""
-        [ 0, "da39a3ee5e6b4b0d3255bfef95601890afd80709" ],
-        // "a"
-        [ 1, "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8" ],
-        // "abc"
-        [ 2, "a9993e364706816aba3e25717850c26c9cd0d89d" ],
-        // "\x55".repeat( 56 )
-        [ 3, "e6e040b9cc3ecfb5df99c2799e8bbac1c2aa0948" ],
-        // "\xaa".repeat( 112 )
-        [ 4, "9aef3a7daa1bcd878197c0d3e14742089566f422" ],
-        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
-        [ 5, "c0b75e3e4fcb5cb2bcaa4770d45de4fb8327d71a" ],
-        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
-        [ 6, "e68774d34bbdfbb5302c6470b68e7f09c5fc74f0" ],
-        // "\x00".repeat( 8 * 1024 * 1024 )
-        [ 7, "5fde1cce603e6566d20da811c9c8bcccb044d4ae" ]
-    ] );
 
     function rol( a, b ) {
         return ( a << b ) | ( a >>> -b );
@@ -2561,22 +2470,29 @@ const SHA1 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // class members / methods
 
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, sha1ref );
-    };
+    thisClass.prototype.hashRef = new Map( [
+        // ""
+        [ 0, "da39a3ee5e6b4b0d3255bfef95601890afd80709" ],
+        // "a"
+        [ 1, "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8" ],
+        // "abc"
+        [ 2, "a9993e364706816aba3e25717850c26c9cd0d89d" ],
+        // "\x55".repeat( 56 )
+        [ 3, "e6e040b9cc3ecfb5df99c2799e8bbac1c2aa0948" ],
+        // "\xaa".repeat( 112 )
+        [ 4, "9aef3a7daa1bcd878197c0d3e14742089566f422" ],
+        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
+        [ 5, "c0b75e3e4fcb5cb2bcaa4770d45de4fb8327d71a" ],
+        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
+        [ 6, "e68774d34bbdfbb5302c6470b68e7f09c5fc74f0" ],
+        // "\x00".repeat( 8 * 1024 * 1024 )
+        [ 7, "5fde1cce603e6566d20da811c9c8bcccb044d4ae" ]
+    ] );
 
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( globalNoPVSpeedTest );
-        ( new thisClass( UNROLLED_CODE ) ).pv( globalNoPVSpeedTest );
-    }
 
     return thisClass;
 } )();
@@ -2851,15 +2767,9 @@ const SHA256BASE = ( function() {
     };
 
     ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
 
     return thisClass;
 } )();
@@ -2874,7 +2784,22 @@ const SHA224 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // private static class variables / functions
 
-    const sha224ref = new Map( [
+    const IV = [
+        0xC105_9ED8, 0x367C_D507, 0x3070_DD17, 0xF70E_5939,
+        0xFFC0_0B31, 0x6858_1511, 0x64F9_8FA7, 0xBEFA_4FA4
+    ];
+
+    ////////////////////////////////////////////////////////////////////
+    // class constructor function
+
+    const thisClass = function( unrolled ) {
+        superClass.call( this, IV, 224, unrolled );
+    };
+
+    ////////////////////////////////////////////////////////////////////
+    // class members / methods
+
+    thisClass.prototype.hashRef = new Map( [
         // ""
         [ 0, "d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f" ],
         // "a"
@@ -2893,37 +2818,10 @@ const SHA224 = ( function() {
         [ 7, "b795e7fc24bbbb7e6ddce57edd3d5b1226c8577edbb88c3c298bbf32" ]
     ] );
 
-    const IV = [
-        0xC105_9ED8, 0x367C_D507, 0x3070_DD17, 0xF70E_5939,
-        0xFFC0_0B31, 0x6858_1511, 0x64F9_8FA7, 0xBEFA_4FA4
-    ];
-
-    ////////////////////////////////////////////////////////////////////
-    // class constructor function
-
-    const thisClass = function( unrolled ) {
-        superClass.call( this, IV, 224, unrolled );
-    };
-
-    ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, sha224ref );
-    };
-
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( NO_SPEED_TEST );
-        ( new thisClass( UNROLLED_CODE ) ).pv( NO_SPEED_TEST );
-    }
 
     return thisClass;
 } )();
@@ -2938,7 +2836,22 @@ const SHA256 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // private static class variables / functions
 
-    const sha256ref = new Map( [
+    const IV = [
+        0x6A09_E667, 0xBB67_AE85, 0x3C6E_F372, 0xA54F_F53A,
+        0x510E_527F, 0x9B05_688C, 0x1F83_D9AB, 0x5BE0_CD19
+    ];
+
+    ////////////////////////////////////////////////////////////////////
+    // class constructor function
+
+    const thisClass = function( unrolled ) {
+        superClass.call( this, IV, 256, unrolled );
+    };
+
+    ////////////////////////////////////////////////////////////////////
+    // class members / methods
+
+    thisClass.prototype.hashRef = new Map( [
         // ""
         [ 0, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" ],
         // "a"
@@ -2957,37 +2870,10 @@ const SHA256 = ( function() {
         [ 7, "2daeb1f36095b44b318410b3f4e8b5d989dcc7bb023d1426c492dab0a3053e74" ]
     ] );
 
-    const IV = [
-        0x6A09_E667, 0xBB67_AE85, 0x3C6E_F372, 0xA54F_F53A,
-        0x510E_527F, 0x9B05_688C, 0x1F83_D9AB, 0x5BE0_CD19
-    ];
-
-    ////////////////////////////////////////////////////////////////////
-    // class constructor function
-
-    const thisClass = function( unrolled ) {
-        superClass.call( this, IV, 256, unrolled );
-    };
-
-    ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, sha256ref );
-    };
-
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( globalNoPVSpeedTest );
-        ( new thisClass( UNROLLED_CODE ) ).pv( globalNoPVSpeedTest );
-    }
 
     return thisClass;
 } )();
@@ -3397,9 +3283,6 @@ const BLAKE2sBASE = ( function() {
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
 
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
     return thisClass;
 } )();
 
@@ -3411,9 +3294,16 @@ const BLAKE2s128 = ( function() {
     const superClass = BLAKE2sBASE;
 
     ////////////////////////////////////////////////////////////////////
-    // private static class variables / functions
+    // class constructor function
 
-    const blake2s128ref = new Map( [
+    const thisClass = function( unrolled ) {
+        superClass.call( this, 128, unrolled );
+    };
+
+    ////////////////////////////////////////////////////////////////////
+    // class members / methods
+
+    thisClass.prototype.hashRef = new Map( [
         // ""
         [ 0, "64550d6ffe2c0a01a14aba1eade0200c" ],
         // "a"
@@ -3433,31 +3323,9 @@ const BLAKE2s128 = ( function() {
     ] );
 
     ////////////////////////////////////////////////////////////////////
-    // class constructor function
-
-    const thisClass = function( unrolled ) {
-        superClass.call( this, 128, unrolled );
-    };
-
-    ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, blake2s128ref );
-    };
-
-    ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( NO_SPEED_TEST );
-        ( new thisClass( UNROLLED_CODE ) ).pv( NO_SPEED_TEST );
-    }
 
     return thisClass;
 } )();
@@ -3470,9 +3338,16 @@ const BLAKE2s160 = ( function() {
     const superClass = BLAKE2sBASE;
 
     ////////////////////////////////////////////////////////////////////
-    // private static class variables / functions
+    // class constructor function
 
-    const blake2s160ref = new Map( [
+    const thisClass = function( unrolled ) {
+        superClass.call( this, 160, unrolled );
+    };
+
+    ////////////////////////////////////////////////////////////////////
+    // class members / methods
+
+    thisClass.prototype.hashRef = new Map( [
         // ""
         [ 0, "354c9c33f735962418bdacb9479873429c34916f" ],
         // "a"
@@ -3492,31 +3367,9 @@ const BLAKE2s160 = ( function() {
     ] );
 
     ////////////////////////////////////////////////////////////////////
-    // class constructor function
-
-    const thisClass = function( unrolled ) {
-        superClass.call( this, 160, unrolled );
-    };
-
-    ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, blake2s160ref );
-    };
-
-    ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( NO_SPEED_TEST );
-        ( new thisClass( UNROLLED_CODE ) ).pv( NO_SPEED_TEST );
-    }
 
     return thisClass;
 } )();
@@ -3529,9 +3382,16 @@ const BLAKE2s224 = ( function() {
     const superClass = BLAKE2sBASE;
 
     ////////////////////////////////////////////////////////////////////
-    // private static class variables / functions
+    // class constructor function
 
-    const blake2s224ref = new Map( [
+    const thisClass = function( unrolled ) {
+        superClass.call( this, 224, unrolled );
+    };
+
+    ////////////////////////////////////////////////////////////////////
+    // class members / methods
+
+    thisClass.prototype.hashRef = new Map( [
         // ""
         [ 0, "1fa1291e65248b37b3433475b2a0dd63d54a11ecc4e3e034e7bc1ef4" ],
         // "a"
@@ -3551,31 +3411,9 @@ const BLAKE2s224 = ( function() {
     ] );
 
     ////////////////////////////////////////////////////////////////////
-    // class constructor function
-
-    const thisClass = function( unrolled ) {
-        superClass.call( this, 224, unrolled );
-    };
-
-    ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, blake2s224ref );
-    };
-
-    ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( NO_SPEED_TEST );
-        ( new thisClass( UNROLLED_CODE ) ).pv( NO_SPEED_TEST );
-    }
 
     return thisClass;
 } )();
@@ -3588,9 +3426,16 @@ const BLAKE2s256 = ( function() {
     const superClass = BLAKE2sBASE;
 
     ////////////////////////////////////////////////////////////////////
-    // private static class variables / functions
+    // class constructor function
 
-    const blake2s256ref = new Map( [
+    const thisClass = function( unrolled ) {
+        superClass.call( this, 256, unrolled );
+    };
+
+    ////////////////////////////////////////////////////////////////////
+    // class members / methods
+
+    thisClass.prototype.hashRef = new Map( [
         // ""
         [ 0, "69217a3079908094e11121d042354a7c1f55b6482ca1a51e1b250dfd1ed0eef9" ],
         // "a"
@@ -3610,31 +3455,9 @@ const BLAKE2s256 = ( function() {
     ] );
 
     ////////////////////////////////////////////////////////////////////
-    // class constructor function
-
-    const thisClass = function( unrolled ) {
-        superClass.call( this, 256, unrolled );
-    };
-
-    ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, blake2s256ref );
-    };
-
-    ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( globalNoPVSpeedTest );
-        ( new thisClass( UNROLLED_CODE ) ).pv( globalNoPVSpeedTest );
-    }
 
     return thisClass;
 } )();
@@ -4085,9 +3908,16 @@ const BLAKE2b160 = ( function() {
     const superClass = BLAKE2bBASE;
 
     ////////////////////////////////////////////////////////////////////
-    // private static class variables / functions
+    // class constructor function
 
-    const blake2b160ref = new Map( [
+    const thisClass = function( unrolled ) {
+        superClass.call( this, 160, unrolled );
+    };
+
+    ////////////////////////////////////////////////////////////////////
+    // class members / methods
+
+    thisClass.prototype.hashRef = new Map( [
         // ""
         [ 0, "3345524abf6bbe1809449224b5972c41790b6cf2" ],
         // "a"
@@ -4107,31 +3937,9 @@ const BLAKE2b160 = ( function() {
     ] );
 
     ////////////////////////////////////////////////////////////////////
-    // class constructor function
-
-    const thisClass = function( unrolled ) {
-        superClass.call( this, 160, unrolled );
-    };
-
-    ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, blake2b160ref );
-    };
-
-    ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( NO_SPEED_TEST );
-        ( new thisClass( UNROLLED_CODE ) ).pv( NO_SPEED_TEST );
-    }
 
     return thisClass;
 } )();
@@ -4144,9 +3952,16 @@ const BLAKE2b256 = ( function() {
     const superClass = BLAKE2bBASE;
 
     ////////////////////////////////////////////////////////////////////
-    // private static class variables / functions
+    // class constructor function
 
-    const blake2b256ref = new Map( [
+    const thisClass = function( unrolled ) {
+        superClass.call( this, 256, unrolled );
+    };
+
+    ////////////////////////////////////////////////////////////////////
+    // class members / methods
+
+    thisClass.prototype.hashRef = new Map( [
         // ""
         [ 0, "0e5751c026e543b2e8ab2eb06099daa1d1e5df47778f7787faab45cdf12fe3a8" ],
         // "a"
@@ -4166,31 +3981,9 @@ const BLAKE2b256 = ( function() {
     ] );
 
     ////////////////////////////////////////////////////////////////////
-    // class constructor function
-
-    const thisClass = function( unrolled ) {
-        superClass.call( this, 256, unrolled );
-    };
-
-    ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, blake2b256ref );
-    };
-
-    ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( NO_SPEED_TEST );
-        ( new thisClass( UNROLLED_CODE ) ).pv( NO_SPEED_TEST );
-    }
 
     return thisClass;
 } )();
@@ -4203,9 +3996,16 @@ const BLAKE2b384 = ( function() {
     const superClass = BLAKE2bBASE;
 
     ////////////////////////////////////////////////////////////////////
-    // private static class variables / functions
+    // class constructor function
 
-    const blake2b384ref = new Map( [
+    const thisClass = function( unrolled ) {
+        superClass.call( this, 384, unrolled );
+    };
+
+    ////////////////////////////////////////////////////////////////////
+    // class members / methods
+
+    thisClass.prototype.hashRef = new Map( [
         // ""
         [ 0, "b32811423377f52d7862286ee1a72ee540524380fda1724a6f25d7978c6fd3244a6caf0498812673c5e05ef583825100" ],
         // "a"
@@ -4225,31 +4025,9 @@ const BLAKE2b384 = ( function() {
     ] );
 
     ////////////////////////////////////////////////////////////////////
-    // class constructor function
-
-    const thisClass = function( unrolled ) {
-        superClass.call( this, 384, unrolled );
-    };
-
-    ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, blake2b384ref );
-    };
-
-    ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( NO_SPEED_TEST );
-        ( new thisClass( UNROLLED_CODE ) ).pv( NO_SPEED_TEST );
-    }
 
     return thisClass;
 } )();
@@ -4262,9 +4040,16 @@ const BLAKE2b512 = ( function() {
     const superClass = BLAKE2bBASE;
 
     ////////////////////////////////////////////////////////////////////
-    // private static class variables / functions
+    // class constructor function
 
-    const blake2b512ref = new Map( [
+    const thisClass = function( unrolled ) {
+        superClass.call( this, 512, unrolled );
+    };
+
+    ////////////////////////////////////////////////////////////////////
+    // class members / methods
+
+    thisClass.prototype.hashRef = new Map( [
         // ""
         [ 0, "786a02f742015903c6c6fd852552d272912f4740e15847618a86e217f71f5419d25e1031afee585313896444934eb04b903a685b1448b755d56f701afe9be2ce" ],
         // "a"
@@ -4284,31 +4069,9 @@ const BLAKE2b512 = ( function() {
     ] );
 
     ////////////////////////////////////////////////////////////////////
-    // class constructor function
-
-    const thisClass = function( unrolled ) {
-        superClass.call( this, 512, unrolled );
-    };
-
-    ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, blake2b512ref );
-    };
-
-    ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( globalNoPVSpeedTest );
-        ( new thisClass( UNROLLED_CODE ) ).pv( globalNoPVSpeedTest );
-    }
 
     return thisClass;
 } )();
@@ -4729,7 +4492,24 @@ const SHA512_224 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // private static class variables / functions
 
-    const sha512_224ref = new Map( [
+    const IV = [
+        new UINT64( 0x8C3D_37C8, 0x1954_4DA2 ), new UINT64( 0x73E1_9966, 0x89DC_D4D6 ),
+        new UINT64( 0x1DFA_B7AE, 0x32FF_9C82 ), new UINT64( 0x679D_D514, 0x582F_9FCF ),
+        new UINT64( 0x0F6D_2B69, 0x7BD4_4DA8 ), new UINT64( 0x77E3_6F73, 0x04C4_8942 ),
+        new UINT64( 0x3F9D_85A8, 0x6A1D_36C8 ), new UINT64( 0x1112_E6AD, 0x91D6_92A1 )
+    ];
+
+    ////////////////////////////////////////////////////////////////////
+    // class constructor function
+
+    const thisClass = function( unrolled ) {
+        superClass.call( this, IV, 224, unrolled );
+    };
+
+    ////////////////////////////////////////////////////////////////////
+    // class members / methods
+
+    thisClass.prototype.hashRef = new Map( [
         // ""
         [ 0, "6ed0dd02806fa89e25de060c19d3ac86cabb87d6a0ddd05c333b84f4" ],
         // "a"
@@ -4748,39 +4528,10 @@ const SHA512_224 = ( function() {
         [ 7, "adabfab70ac8feb8241a2be520343f3f6d9dd5f976f0f6d43bb16d9b" ]
     ] );
 
-    const IV = [
-        new UINT64( 0x8C3D_37C8, 0x1954_4DA2 ), new UINT64( 0x73E1_9966, 0x89DC_D4D6 ),
-        new UINT64( 0x1DFA_B7AE, 0x32FF_9C82 ), new UINT64( 0x679D_D514, 0x582F_9FCF ),
-        new UINT64( 0x0F6D_2B69, 0x7BD4_4DA8 ), new UINT64( 0x77E3_6F73, 0x04C4_8942 ),
-        new UINT64( 0x3F9D_85A8, 0x6A1D_36C8 ), new UINT64( 0x1112_E6AD, 0x91D6_92A1 )
-    ];
-
-    ////////////////////////////////////////////////////////////////////
-    // class constructor function
-
-    const thisClass = function( unrolled ) {
-        superClass.call( this, IV, 224, unrolled );
-    };
-
-    ////////////////////////////////////////////////////////////////////
-    // class members / methods
-
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, sha512_224ref );
-    };
-
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( NO_SPEED_TEST );
-        ( new thisClass( UNROLLED_CODE ) ).pv( NO_SPEED_TEST );
-    }
 
     return thisClass;
 } )();
@@ -4794,25 +4545,6 @@ const SHA512_256 = ( function() {
 
     ////////////////////////////////////////////////////////////////////
     // private static class variables / functions
-
-    const sha512_256ref = new Map( [
-        // ""
-        [ 0, "c672b8d1ef56ed28ab87c3622c5114069bdd3ad7b8f9737498d0c01ecef0967a" ],
-        // "a"
-        [ 1, "455e518824bc0601f9fb858ff5c37d417d67c2f8e0df2babe4808858aea830f8" ],
-        // "abc"
-        [ 2, "53048e2681941ef99b2e29b76b4c7dabe4c2d0c634fc6d46e0e2f13107e7af23" ],
-        // "\x55".repeat( 56 )
-        [ 3, "0be34f595e061f6cb635f442fcbd837caf49f2e9efce7d122ec7c7b6d18c44df" ],
-        // "\xaa".repeat( 112 )
-        [ 4, "be2964e951e913570150b22d76ca45b1802f09ec37b41769c3686c91b272cac5" ],
-        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
-        [ 5, "a2825a4a7a767627dcf3502266f6cff2ed4a2f1c011764f1cb612a5d23b9b896" ],
-        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
-        [ 6, "d678f4d5c9d86e33033b249b1f077c4b0bf6561163028b11e220ec74acf3ba05" ],
-        // "\x00".repeat( 8 * 1024 * 1024 )
-        [ 7, "3e3f007a573839dcd0b048c4dd7d173ee1d4f07ed5d4eda4a7ef16aa9b772ad8" ]
-    ] );
 
     const IV = [
         new UINT64( 0x2231_2194, 0xFC2B_F72C ), new UINT64( 0x9F55_5FA3, 0xC84C_64C2 ),
@@ -4831,22 +4563,29 @@ const SHA512_256 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // class members / methods
 
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, sha512_256ref );
-    };
+    thisClass.prototype.hashRef = new Map( [
+        // ""
+        [ 0, "c672b8d1ef56ed28ab87c3622c5114069bdd3ad7b8f9737498d0c01ecef0967a" ],
+        // "a"
+        [ 1, "455e518824bc0601f9fb858ff5c37d417d67c2f8e0df2babe4808858aea830f8" ],
+        // "abc"
+        [ 2, "53048e2681941ef99b2e29b76b4c7dabe4c2d0c634fc6d46e0e2f13107e7af23" ],
+        // "\x55".repeat( 56 )
+        [ 3, "0be34f595e061f6cb635f442fcbd837caf49f2e9efce7d122ec7c7b6d18c44df" ],
+        // "\xaa".repeat( 112 )
+        [ 4, "be2964e951e913570150b22d76ca45b1802f09ec37b41769c3686c91b272cac5" ],
+        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
+        [ 5, "a2825a4a7a767627dcf3502266f6cff2ed4a2f1c011764f1cb612a5d23b9b896" ],
+        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
+        [ 6, "d678f4d5c9d86e33033b249b1f077c4b0bf6561163028b11e220ec74acf3ba05" ],
+        // "\x00".repeat( 8 * 1024 * 1024 )
+        [ 7, "3e3f007a573839dcd0b048c4dd7d173ee1d4f07ed5d4eda4a7ef16aa9b772ad8" ]
+    ] );
 
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( NO_SPEED_TEST );
-        ( new thisClass( UNROLLED_CODE ) ).pv( NO_SPEED_TEST );
-    }
 
     return thisClass;
 } )();
@@ -4860,25 +4599,6 @@ const SHA512_384 = ( function() {
 
     ////////////////////////////////////////////////////////////////////
     // private static class variables / functions
-
-    const sha512_384ref = new Map( [
-        // ""
-        [ 0, "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b" ],
-        // "a"
-        [ 1, "54a59b9f22b0b80880d8427e548b7c23abd873486e1f035dce9cd697e85175033caa88e6d57bc35efae0b5afd3145f31" ],
-        // "abc"
-        [ 2, "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7" ],
-        // "\x55".repeat( 56 )
-        [ 3, "7c1d28c4252dc78eadfd6b24c042490c24670e2682abdcfff6d3b8228ae2d5f732bcf887337256088a32c0dce774bd16" ],
-        // "\xaa".repeat( 112 )
-        [ 4, "0c1267ac84de9cd0c04ed81d41c7c50a79e62c17eec07312336dc7136bd655be5171113bc21e8236fb00be4986cb82ce" ],
-        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
-        [ 5, "8a8edd50a7b186baa717b88dd3032afe87f2107e0c920cd03e4ae6f6bd5816b4f350ca3b2a953c362fb4d5765fdf6ce5" ],
-        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
-        [ 6, "278fedd78334cb84ad5f89ef5663e6e71ccf922e5bf88fb147b4abfe75d42ff1bdc77bd845549d0ba84446721cf60122" ],
-        // "\x00".repeat( 8 * 1024 * 1024 )
-        [ 7, "8b7e1c37b328af82db69df8b3155f3ad39727b8aab47279ab2c3f3bf54e5150913024ce3dcd6bea1c03a1c97044dfcd7" ]
-    ] );
 
     const IV = [
         new UINT64( 0xCBBB_9D5D, 0xC105_9ED8 ), new UINT64( 0x629A_292A, 0x367C_D507 ),
@@ -4897,22 +4617,29 @@ const SHA512_384 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // class members / methods
 
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, sha512_384ref );
-    };
+    thisClass.prototype.hashRef = new Map( [
+        // ""
+        [ 0, "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b" ],
+        // "a"
+        [ 1, "54a59b9f22b0b80880d8427e548b7c23abd873486e1f035dce9cd697e85175033caa88e6d57bc35efae0b5afd3145f31" ],
+        // "abc"
+        [ 2, "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7" ],
+        // "\x55".repeat( 56 )
+        [ 3, "7c1d28c4252dc78eadfd6b24c042490c24670e2682abdcfff6d3b8228ae2d5f732bcf887337256088a32c0dce774bd16" ],
+        // "\xaa".repeat( 112 )
+        [ 4, "0c1267ac84de9cd0c04ed81d41c7c50a79e62c17eec07312336dc7136bd655be5171113bc21e8236fb00be4986cb82ce" ],
+        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
+        [ 5, "8a8edd50a7b186baa717b88dd3032afe87f2107e0c920cd03e4ae6f6bd5816b4f350ca3b2a953c362fb4d5765fdf6ce5" ],
+        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
+        [ 6, "278fedd78334cb84ad5f89ef5663e6e71ccf922e5bf88fb147b4abfe75d42ff1bdc77bd845549d0ba84446721cf60122" ],
+        // "\x00".repeat( 8 * 1024 * 1024 )
+        [ 7, "8b7e1c37b328af82db69df8b3155f3ad39727b8aab47279ab2c3f3bf54e5150913024ce3dcd6bea1c03a1c97044dfcd7" ]
+    ] );
 
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( NO_SPEED_TEST );
-        ( new thisClass( UNROLLED_CODE ) ).pv( NO_SPEED_TEST );
-    }
 
     return thisClass;
 } )();
@@ -4926,25 +4653,6 @@ const SHA512 = ( function() {
 
     ////////////////////////////////////////////////////////////////////
     // private static class variables / functions
-
-    const sha512ref = new Map( [
-        // ""
-        [ 0, "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e" ],
-        // "a"
-        [ 1, "1f40fc92da241694750979ee6cf582f2d5d7d28e18335de05abc54d0560e0f5302860c652bf08d560252aa5e74210546f369fbbbce8c12cfc7957b2652fe9a75" ],
-        // "abc"
-        [ 2, "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f" ],
-        // "\x55".repeat( 56 )
-        [ 3, "72c40895663e5aec057ac817f4c428e9987667724578a75bbe5f5180974c9b845e8b2bd9c7889de6404af6bc66b4f8f7e153df0fef05ab90b5ea10f8ddd8bd44" ],
-        // "\xaa".repeat( 112 )
-        [ 4, "5ce067d614617a6d576178bd99740231471cc36002335f9c3a045f6ab74cffc5a20c6de33a36459118b5c149117cd67bcf4bc7ad436806856c38b07bbbf003e9" ],
-        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
-        [ 5, "162850a3ae604811c6dadc9f72eab5e62cc0274be94b0943022e5f5897dd3f0b403c664bd1ef05f78d5f61f909dbd8ac223e6d308105db7344d85b74fcd2780a" ],
-        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
-        [ 6, "000761cbbaf10962b2011fdf5c8c630ff13116e080b8ccc514abbc05bd5d63751d2a3784634d2034f37f3e155db6c3f512cc9057309ca29dc513b9258d422210" ],
-        // "\x00".repeat( 8 * 1024 * 1024 )
-        [ 7, "cf76cca4e0f874d508f7e40fb84abc5789ca5f96c1e54e064f3be302766a59fc15a2efb7ffcc9692d13b906b2fe5a0215520d5e232ac69c754f2addb069580de" ]
-    ] );
 
     const IV = [
         new UINT64( 0x6A09_E667, 0xF3BC_C908 ), new UINT64( 0xBB67_AE85, 0x84CA_A73B ),
@@ -4963,22 +4671,29 @@ const SHA512 = ( function() {
     ////////////////////////////////////////////////////////////////////
     // class members / methods
 
-    thisClass.prototype.verify = function() {
-        return superClass.prototype.verify.call( this, sha512ref );
-    };
+    thisClass.prototype.hashRef = new Map( [
+        // ""
+        [ 0, "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e" ],
+        // "a"
+        [ 1, "1f40fc92da241694750979ee6cf582f2d5d7d28e18335de05abc54d0560e0f5302860c652bf08d560252aa5e74210546f369fbbbce8c12cfc7957b2652fe9a75" ],
+        // "abc"
+        [ 2, "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f" ],
+        // "\x55".repeat( 56 )
+        [ 3, "72c40895663e5aec057ac817f4c428e9987667724578a75bbe5f5180974c9b845e8b2bd9c7889de6404af6bc66b4f8f7e153df0fef05ab90b5ea10f8ddd8bd44" ],
+        // "\xaa".repeat( 112 )
+        [ 4, "5ce067d614617a6d576178bd99740231471cc36002335f9c3a045f6ab74cffc5a20c6de33a36459118b5c149117cd67bcf4bc7ad436806856c38b07bbbf003e9" ],
+        // "\x84\x42\x21\x10\x7b\xbd\xde\xef".repeat( 16 )
+        [ 5, "162850a3ae604811c6dadc9f72eab5e62cc0274be94b0943022e5f5897dd3f0b403c664bd1ef05f78d5f61f909dbd8ac223e6d308105db7344d85b74fcd2780a" ],
+        // "\xfe\xed\xdc\xcb\xba\xa9\x98\x87\x76\x65\x54\x43\x32\x21\x10".repeat( 128 )
+        [ 6, "000761cbbaf10962b2011fdf5c8c630ff13116e080b8ccc514abbc05bd5d63751d2a3784634d2034f37f3e155db6c3f512cc9057309ca29dc513b9258d422210" ],
+        // "\x00".repeat( 8 * 1024 * 1024 )
+        [ 7, "cf76cca4e0f874d508f7e40fb84abc5789ca5f96c1e54e064f3be302766a59fc15a2efb7ffcc9692d13b906b2fe5a0215520d5e232ac69c754f2addb069580de" ]
+    ] );
 
     ////////////////////////////////////////////////////////////////////
     // class inheritance
 
     Object.setPrototypeOf( thisClass.prototype, superClass.prototype );
-
-    ////////////////////////////////////////////////////////////////////
-    // static class initialization
-
-    if( doStartupPV ) {
-        ( new thisClass( MINI_CODE ) ).pv( globalNoPVSpeedTest );
-        ( new thisClass( UNROLLED_CODE ) ).pv( globalNoPVSpeedTest );
-    }
 
     return thisClass;
 } )();
@@ -5033,6 +4748,25 @@ const DIGESTFACTORY = ( function() {
         else
             return new digest();
     };
+
+    thisClass.pvAll = () => {
+        for( const [ name, DIGEST ] of digests ) {
+            for( const variant of [ MINI_CODE, UNROLLED_CODE ] ) {
+                const digest = new DIGEST( variant );
+                digest.pv();
+            }
+        }
+    }
+
+    thisClass.verifyAll = () => {
+        for( const [ name, DIGEST ] of digests ) {
+            for( const variant of [ MINI_CODE, UNROLLED_CODE ] ) {
+                const digest = new DIGEST( variant );
+                Print( digest.getName() + ': '
+                    + ( digest.verify() ? 'OK' : 'FAIL' ) );
+            }
+        }
+    }
 
     return thisClass;
 } )();
